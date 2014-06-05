@@ -1,4 +1,4 @@
-# 创建工程
+# 开始项目
 
 ## 介绍
 
@@ -52,181 +52,200 @@
 
 ![new app](image/guide1-1.png)
 
-The play new command creates a new directory yabe/ and populates it with a series of files and directories, the most important being:
+`play new`命令创建了一个新的文件夹*yabe/*外加一系列文件和文件夹。其中包括下面各部分：
 
-app/ contains the application’s core, split between models, controllers and views directories. It can contain other Java packages as well. This is the directory where .java source files live.
+**app/** 包括应用的核心，划分为models，controllers和views文件夹。它也可以包括其他Java的包。这是`.java`源代码文件所在之处。
 
-conf/ contains all the configuration files for the application, especially the main application.conf file, the routes definition files and the messages files used for internationalization.
+**conf/** 包括所有的应用配置文件，特别是主*application.conf*文件，路由定义文件和用于国际化的信息文件。
 
-lib/ contains all optional Java libraries packaged as standard .jar files.
+**lib/** 包括所有可选的Java库，比如标准的`.jar`。
 
-public/ contains all the publicly available resources, which includes JavaScript files, stylesheets and images directories.
+**public/** 包括所有可以公开的资源，比如Javascript文件，样式表和图片。
 
-test/ contains all the application tests. Tests are written either as Java JUnit tests or as Selenium tests.
+**test/** 包括所有的应用测试。测试可以是Java的JUnit测试或者Selenium测试。
 
-Because Play uses UTF-8 as single encoding, it’s very important that all text files hosted in these directories are encoded using this charset. Make sure to configure your text editor accordingly.
+>因为Play只使用UTF-8编码，故所有的文本文件都需要使用UTF-8编码。确保你的文本编辑器已经做了相应的配置。
 
-Now if you’re a seasoned Java developer, you may wonder where all the .class files go. The answer is nowhere: Play doesn’t use any class files; instead it reads the Java source files directly. Under the hood we use the Eclipse compiler to compile Java sources on the fly.
+如果你开发过Java应用，你可能会奇怪`.class`文件到哪儿去了。答案是……没有`.class`文件了：Play并不使用任何`class`文件；相反它直接处理Java源代码。实际上我们使用Eclipse的编译器来即时编译Java源代码。
 
-That allows two very important things in the development process. The first one is that Play will detect changes you make to any Java source file and automatically reload them at runtime. The second is that when a Java exception occurs, Play will create better error reports showing you the exact source code.
+这导致了开发过程中的两点重要的改进。第一个，Play会自动监测Java源代码的改变并在运行时自动重载。第二个，当一个Java异常发生时，Play能向你展示更好的错误报告 - 带对应的源代码的哦～
 
-In fact Play keeps a bytecode cache in the application’s tmp/ directory, but only to speed things up between restart on large applications. You can discard this cache using the play clean command if needed.
+>事实上Play在应用的*tmp/*文件夹下有字节码的缓存，但只用于加速重新启动项目的过程。如果需要，你可以用`play clean`清空缓存。
 
-Running the application
-We can now test the newly-created application. Just return to the command line, go to the newly-created yabe/ directory and type play run. Play will now load the application and start a web server on port 9000.
+## 运行应用
 
-You can see the new application by opening a browser to http://localhost:9000. A new application has a standard welcome page that just tells you that it was successfully created.
+现在看一下新创建的应用。回到命令行，切换到新创建的*yabe/*文件夹并输入`play run`。Play将加载应用，并在`localhost:9000`启动一个服务器。
 
+用浏览器打开http://localhost:9000，你将看到新的应用。一个新的应用用一个标准的欢迎页面，告诉你一切安好。
 
+![welcome](image/guide1-2.png)
 
-Let’s see how the new application can display this page.
+下面看看一个新应用是如何展示这个页面的。
 
-The main entry point of your application is the conf/routes file. This file defines all accessible URLs for the application. If you open the generated routes file you will see this first ‘route’:
+你的应用的主入口是`conf/routes`文件。这个文件定义了应用中所有合法的URL。如果你打开这个文件，就会看到第一个'route':
 
-GET		/			Application.index
-That simply tells Play that when the web server receives a GET request for the / path, it must call the Application.index Java method. In this case, Application.index is a shortcut for controllers.Application.index, because the controllers package is implicit.
+    GET		/			Application.index
+    
+这里简单地告诉Play，当服务器收到对`/`路径的一个**GET**请求，它要调用Java方法`Application.index`。在这个例子中，`Application.index`是`controllers.Application.index`的缩写，因为`controllers`包是默认在内的。
 
-When you create standalone Java applications you generally use a single entry point defined by a method such as:
+当你创建单个Java应用时，你通常用main方法定义一个单一入口：
 
-public static void main(String[] args) {
-  ... 
-}
-A Play application has several entry points, one for each URL. We call these methods action methods. Action methods are defined in special classes that we call controllers.
+    public static void main(String[] args) {
+      ... 
+    }
+    
+Play应用有多个入口，每个URL对应一个。我们称之为`action`方法。`action`方法定义于被称为`controllers`的类中。
 
-Let’s see what the controllers.Application controller looks like. Open the yabe/app/controllers/Application.java source file:
+让我们看一下`controllers.Application`控制器长什么样子。打开`yabe/app/controllers/Application.java`:
 
-package controllers;
- 
-import play.mvc.*;
- 
-public class Application extends Controller {
- 
-	public static void index() {
-		render();
-	}
- 
-}
-Notice that controller classes extend the play.mvc.Controller class. This class provides many useful methods for controllers, like the render() method we use in the index action.
-
-The index action is defined as a public static void method. This is how action methods are defined. You can see that action methods are static, because the controller classes are never instantiated. They are marked public to authorize the framework to call them in response to a URL. They always return void.
-
-The default index action is simple: it calls the render() method which tells Play to render a template. Using a template is the most common way (but not the only one) to generate the HTTP response.
-
-Templates are simple text files that live in the /app/views directory. Because we didn’t specify a template, the default one for this action will be used: Application/index.html
-
-To see what the template looks like, open the /yabe/app/views/Application/index.html file:
-
-#{extends 'main.html' /}
-#{set title:'Home' /}
- 
-#{welcome /}
-The template content seems pretty light. In fact, all you see are Play tags. Play tags are similar to JSP tags. This is the #{welcome /} tag that generates the welcome message you saw in the browser.
-
-The #{extends /} tag tells Play that this template inherits another template called main.html. Template inheritance is a powerful concept that allows you to create complex web pages by reusing common parts.
-
-Open the /yabe/app/views/main.html template:
-
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>#{get 'title' /}</title>
-    <meta charset="${_response_encoding}">
-    <link rel="stylesheet" media="screen"
-      href="@{'/public/stylesheets/main.css'}">
-    #{get 'moreStyles' /}
-    <link rel="shortcut icon" type="image/png"
-      href="@{'/public/images/favicon.png'}">
-    <script type="text/javascript" charset="${_response_encoding}"
-      src="@{'/public/javascripts/jquery-1.5.2.min.js'}"></script>
-    #{get 'moreScripts' /}
-  </head>
-  <body>
-    #{doLayout /}
-  </body>
-</html>
-Do you see the #{doLayout /} tag near the bottom? This is where the content of Application/index.html will be inserted.
-
-We can try to edit the controller file to see how Play automatically reloads it. Open the yabe/app/controllers/Application.java file in a text editor, and add a mistake by removing the trailing semicolon after the render() call:
-
-public static void index() {
-    render()
-}
-Go to the browser and refresh the page. You can see that Play detected the change and tried to reload the Application controller. But because you made a mistake, you get a compilation error.
+    package controllers;
+     
+    import play.mvc.*;
+     
+    public class Application extends Controller {
+     
+	    public static void index() {
+		    render();
+	    }
+     
+    }
+    
+注意控制器类拓展了`play.mvc.Controller`。这个类提供了许多对控制器有用的方法，比如我们在index action用到的`render()`。
 
 
+这个index action被定义为`public static void`方法。action方法都需要这样定义。你可以看到这些方法都是static的，因为控制器类永远不会实例化。它们同时也是public的，这样框架才能调用它们来响应URL请求。它们总是返回void。
 
-Ok, let’s correct the error, and make a real modification:
+这个index action很简单：它调用`render()`方法来渲染模板。使用模板是大多数情况下生成HTTP响应的方式。（但不是唯一的方式）
 
-public static void index() {
-    System.out.println("Yop");
-    render();
-}
-This time, Play has correctly reloaded the controller and replaced the old code in the JVM. Each request to the / URL will output the ‘Yop’ message to the console.
+模板是位于`/app/views`的文本文件。因为我们没有指定一个模板，这个action就会使用默认的`Application/index.html`。
 
-You can remove this useless line, and now edit the yabe/app/views/Application/index.html template to replace the welcome message:
+打开`/yabe/app/views/Application/index.html`看看模板长啥样:
 
-#{extends 'main.html' /}
-#{set title:'Home' /}
- 
-<h1>A blog will be here</h1>
-Like for Java code changes, just refresh the page in the browser to see the modification.
+    #{extends 'main.html' /}
+    #{set title:'Home' /}
+     
+    #{welcome /}
 
-We will now start to code the blog application. You can either continue to work with a text editor or open the project in a Java IDE like Eclipse or NetBeans. If you want to set-up a Java IDE, see Setting-up your preferred IDE.
+模板的内容简单明了。事实上，你看到的全部是Play标签。Play标签就像是JSP标签。#{welcome /}标签生成了你看到的欢迎信息。
 
-Setting-up the database
-One more thing before starting to code. For the blog engine, we will need a database. For development purposes, Play comes with a stand alone SQL database management system called H2. This is the best way to start a project before switching to a more robust database if needed. You can choose to have either an in-memory database or a filesystem database that will keep your data between application restarts.
+\#{extends /}标签告诉Play，这个模板是继承自另一个叫`main.html`的模板。模板继承是强大的特性，它允许你通过重用组件来创建复杂的Web页面。
 
-At the beginning, we will do a lot of testing and changes in the application model. For that reason, it’s better to use an in-memory database so we always start with a fresh data set.
+打开`/yabe/app/views/main.html`:
 
-To set-up the database, open the yabe/conf/application.conf file and uncomment this line:
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>#{get 'title' /}</title>
+        <meta charset="${_response_encoding}">
+        <link rel="stylesheet" media="screen"
+          href="@{'/public/stylesheets/main.css'}">
+        #{get 'moreStyles' /}
+        <link rel="shortcut icon" type="image/png"
+          href="@{'/public/images/favicon.png'}">
+        <script type="text/javascript" charset="${_response_encoding}"
+          src="@{'/public/javascripts/jquery-1.5.2.min.js'}"></script>
+        #{get 'moreScripts' /}
+      </head>
+      <body>
+        #{doLayout /}
+      </body>
+    </html>
 
-db=mem
-As you can see in the comments, you can easily set-up any JDBC compliant database and even configure the connection pool.
+你看到靠近底部的#{doLayout /}标签了吗？这是插入`Application/index.html`的内容的地方。
 
-This tutorial is designed to work with the in-memory database; instructions for using JPA with other databases is outside the scope of this tutorial.
+我们来看看Play如何自动重新加载控制器文件。打开`yabe/app/controllers/Application.java`，删掉`render()`后面的分号（来制造一个错误）
 
-Now, go back to your browser and refresh the welcome page. Play will automatically start the database. Check for this line in the application logs:
+    public static void index() {
+        render()
+    }
+    
+在浏览器刷新页面。你可以看到Play监测到文件的变化，并重载了应用控制器。但因为制造了错误，你将看到一个编译错误。
 
-INFO  ~ Connected to jdbc:h2:mem:play
-Using a version control system to track changes
-When you work on a project, it’s highly recommended to store your source code in a version control system (VCS). It allows you to revert to a previous version if a change breaks something, work with several people and give access to all the successive versions of the application.
+![error](image/guide1-3.png)
 
-When storing a Play application in a VCS, it is important to exclude the tmp/, modules/, lib/, test-result/ and logs/ directories.
+Ok，现在更正错误，做一个真正的修改：
 
-If you are using Eclipse, and the play eclipsify command, then you should also exclude .classpath and eclipse/.
+    public static void index() {
+        System.out.println("Yop");
+        render();
+    }
+    
+这次，Play正确地重载了控制器，替换掉JVM中的旧代码。每次请求`/`都会在控制台输出'Yop'信息。
 
-Bazaar
-Here we will use Bazaar as an example. Bazaar is a distributed source version control system.
+你可以移开那行输出代码，现在修改`yabe/app/views/Application/index.html`模板，替换掉欢迎信息：
 
-Installing Bazaar is beyond the scope of this tutorial but it is very easy on any system. Once you have a working installation of Bazaar, go to the blog directory and init the application versioning by typing:
+    #{extends 'main.html' /}
+    #{set title:'Home' /}
+     
+    <h1>A blog will be here</h1>
 
-$ bzr init
-$ bzr ignore tmp
-$ bzr ignore modules
-$ bzr ignore lib
-$ bzr ignore test-result
-$ bzr ignore logs
-Now we can commit our first blog engine version:
+如果Java代码改变了，只需刷新页面，就能看到修改结果。
 
-$ bzr add
-$ bzr commit -m "YABE initial version"
-Git
-Git is another distributed version control system, see its documentation for more information.
+>我们还没有开始写博客应用呢。你可以选择使用文本编辑器或者IDE，比如Eclipse或NetBeans。如果你想使用IDE，参阅[配置你喜欢的IDE](http://play-framework.herokuapp.com/zh/ide)。
 
-Create a git working repository at the application root directory:
+## 配置数据库
 
-$ git init
-Create a .gitignore file containing the following content:
+在开始码代码之前还要做多一件事。作为博客引擎，我们需要一个数据库。为了便于开发，Play内置了一个叫H2的数据库。当然如果需要，我们也可以切换到一个更加健壮的数据库。你可以选择设置数据是存储在内存中，还是在文件系统中（这样即使应用重新启动，你的数据也会保留）。
 
-/tmp
-/modules
-/lib
-/test-result
-/logs
-Add the content of the application and commit it:
+在一开始，我们将对应用模型做许多测试和改动。因此，最好选择存储在内存中，这样每次启动，都不会跟旧数据有任何牵连。
 
-$ git add .
-$ git commit -m "YABE initial version"
-Version 1 is committed and we now have a solid foundation for our project.
+打开`yabe/conf/application.conf`，解除这一行的注释：
 
-Go to the A first iteration of the data model.
+    db=mem
+
+正如你在注释中看到的一样，你可以容易地配置任何JDBC数据库，甚至配置连接池。
+
+>这个教程是按照纯内存数据库撰写的；如何在其他数据库使用JPA的内容超出了本教程的范畴。
+
+现在，回到浏览器并刷新欢迎页面。Play将自动启动数据库。检查下面的一行是否出现在应用日志中：
+
+    INFO  ~ Connected to jdbc:h2:mem:play
+    
+## 使用版本控制系统来追踪变化
+
+当你开发一个项目时，最好使用版本控制系统（VCS）来存储你的源代码。如果发生什么问题，它允许你还原到上一个版本。同时它使得多人协作变得更方便，并且允许签出应用的各个版本。
+
+当在VCS中存储Play应用代码时，记住把`tmp/`，`modules/`，`lib/`，`test-result/`和`logs`文件夹排除在外。
+
+如果你正在使用Eclipse，和`play eclipsify`命令，那么你也应该把`.classpath`和`eclipse/`排除在外。
+
+## Bazaar
+
+这里我们将用Bazaar作为例子。[Bazaar](http://bazaar-vcs.org/)是一个分布式版本控制系统。
+
+如何安装Bazaar超出了本教程的范畴，但无论是何种系统，安装都很简单。一旦你安装好了，切到博客文件夹，并输入命令初始化应用版本：
+
+    $ bzr init
+    $ bzr ignore tmp
+    $ bzr ignore modules
+    $ bzr ignore lib
+    $ bzr ignore test-result
+    $ bzr ignore logs
+    
+现在我们可以提交我们的博客引擎的第一个版本：
+
+    $ bzr add
+    $ bzr commit -m "YABE initial version"
+    
+## Git
+
+[Git](http://git-scm.com/)是另一个分布式版本控制系统，查看它的文档来获取更多信息。
+
+在应用的根目录下创建一个git版本库：
+
+    $ git init
+    
+创建包括下面各项的`.gitignore`：
+
+    /tmp
+    /modules
+    /lib
+    /test-result
+    /logs
+    
+加入应用的代码，然后提交：
+
+    $ git add .
+    $ git commit -m "YABE initial version"
+    
+版本1已经提交上去，现在我们的应用已经有了个坚实的基础。
