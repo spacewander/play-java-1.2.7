@@ -136,3 +136,294 @@
 
 ## Post类
 
+`Post`类表示博客文章。让我们写下代码：
+
+    package models;
+     
+    import java.util.*;
+    import javax.persistence.*;
+     
+    import play.db.jpa.*;
+     
+    @Entity
+    public class Post extends Model {
+     
+        public String title;
+        public Date postedAt;
+        
+        @Lob
+        public String content;
+        
+        @ManyToOne
+        public User author;
+        
+        public Post(User author, String title, String content) {
+            this.author = author;
+            this.title = title;
+            this.content = content;
+            this.postedAt = new Date();
+        }
+     
+    }
+    
+这里我们使用`@Lob`注解告诉JPA来使用字符大对象类型（clob）来存储文章内容。我们也声明跟`User`类的关系是`@ManyToOne`。这意味着每个`Post`对应一个`User`，而每个`User`可以有多个`Post`。
+
+> PostgreSQL的最近版本不会将`@Lob`注解的`String`成员存储成字符大对象类型，除非你额外用`@Type(type = "org.hibernate.type.TextType")`注解该成员。
+
+我们将写一个新的测试用例来检查`Post`类能否正常工作。但在写下更多测试之前，我们需要修改下JUnit测试类。在当前测试中，数据库的内容永不删除，所以每次运行测试都会创建越来越多的对象。假如将来我们需要测试对象的数目是否正确，这将会是一个问题。
+
+所以先写一个JUnit的`setup()`方法在每次测试之前清空数据库：
+
+    public class BasicTest extends UnitTest {
+     
+        @Before
+        public void setup() {
+            Fixtures.deleteDatabase();
+        }
+     
+        …
+    }
+    
+> @Before是JUnit测试工具的一个核心概念
+
+如你所见，`Fixtures`类是一个在测试时帮助处理数据库的类。再次运行测试并检查是否一切安好。之后接着下下一个测试：
+
+    @Test
+    public void createPost() {
+        // Create a new user and save it
+        User bob = new User("bob@gmail.com", "secret", "Bob").save();
+        
+        // Create a new post
+        new Post(bob, "My first post", "Hello world").save();
+        
+        // Test that the post has been created
+        assertEquals(1, Post.count());
+        
+        // Retrieve all posts created by Bob
+        List<Post> bobPosts = Post.find("byAuthor", bob).fetch();
+        
+        // Tests
+        assertEquals(1, bobPosts.size());
+        Post firstPost = bobPosts.get(0);
+        assertNotNull(firstPost);
+        assertEquals(bob, firstPost.author);
+        assertEquals("My first post", firstPost.title);
+        assertEquals("Hello world", firstPost.content);
+        assertNotNull(firstPost.postedAt);
+    }
+    
+> **不要忘记**导入`java.util.List`，否则你会得到一个编译错误。
+
+## 添加Comment类
+
+最后，我们需要给博文添加评论功能。
+
+创建`Comment`类的方式十分简单直白。
+
+    package models;
+     
+    import java.util.*;
+    import javax.persistence.*;
+     
+    import play.db.jpa.*;
+     
+    @Entity
+    public class Comment extends Model {
+     
+        public String author;
+        public Date postedAt;
+         
+        @Lob
+        public String content;
+        
+        @ManyToOne
+        public Post post;
+        
+        public Comment(Post post, String author, String content) {
+            this.post = post;
+            this.author = author;
+            this.content = content;
+            this.postedAt = new Date();
+        }
+     
+    }
+    
+让我们写下第一个测试用例：
+
+    @Test
+    public void postComments() {
+        // Create a new user and save it
+        User bob = new User("bob@gmail.com", "secret", "Bob").save();
+     
+        // Create a new post
+        Post bobPost = new Post(bob, "My first post", "Hello world").save();
+     
+        // Post a first comment
+        new Comment(bobPost, "Jeff", "Nice post").save();
+        new Comment(bobPost, "Tom", "I knew that !").save();
+     
+        // Retrieve all comments
+        List<Comment> bobPostComments = Comment.find("byPost", bobPost).fetch();
+     
+        // Tests
+        assertEquals(2, bobPostComments.size());
+     
+        Comment firstComment = bobPostComments.get(0);
+        assertNotNull(firstComment);
+        assertEquals("Jeff", firstComment.author);
+        assertEquals("Nice post", firstComment.content);
+        assertNotNull(firstComment.postedAt);
+     
+        Comment secondComment = bobPostComments.get(1);
+        assertNotNull(secondComment);
+        assertEquals("Tom", secondComment.author);
+        assertEquals("I knew that !", secondComment.content);
+        assertNotNull(secondComment.postedAt);
+    }
+    
+你可以看到**Post**和**Comments**之间的联系并不紧密：我们不得不通过查询来获得所有跟某一个`Post`关联的评论。通过在`Post`和`Comment`类之间建立新的关系，我们可以改善这一点。
+
+在`Post`类添加`comments`成员：
+
+    ...
+    @OneToMany(mappedBy="post", cascade=CascadeType.ALL)
+    public List<Comment> comments;
+     
+    public Post(User author, String title, String content) { 
+        this.comments = new ArrayList<Comment>();
+        this.author = author;
+        this.title = title;
+        this.content = content;
+        this.postedAt = new Date();
+    }
+    ...
+    
+注意现在我们用`mappedBy`属性来告诉JPA`Comment`类的post成员是维持这个关系的一方。当你用JPA定义一个双向关系时，需要指定哪一方来维持这个关系。在这个例子中，因为`Comment`示例依赖于`Post`，我们按`Comment.post`的反向来定义关系。
+
+我们也设置了`cascade`属性来告诉JPA，我们希望`Post`的删除将级联影响到`comments`。也即是，如果你删除一个博文时，所有相关的评论也将一并删除。
+
+由于有了这个新关系，我们可以给`Post`类添加一个辅助方法来简化评论的添加：
+
+    public Post addComment(String author, String content) {
+        Comment newComment = new Comment(this, author, content).save();
+        this.comments.add(newComment);
+        this.save();
+        return this;
+    }
+    
+让我们写多一个测试检查它能否工作：
+    
+    @Test
+    public void useTheCommentsRelation() {
+        // Create a new user and save it
+        User bob = new User("bob@gmail.com", "secret", "Bob").save();
+     
+        // Create a new post
+        Post bobPost = new Post(bob, "My first post", "Hello world").save();
+     
+        // Post a first comment
+        bobPost.addComment("Jeff", "Nice post");
+        bobPost.addComment("Tom", "I knew that !");
+     
+        // Count things
+        assertEquals(1, User.count());
+        assertEquals(1, Post.count());
+        assertEquals(2, Comment.count());
+     
+        // Retrieve Bob's post
+        bobPost = Post.find("byAuthor", bob).first();
+        assertNotNull(bobPost);
+     
+        // Navigate to comments
+        assertEquals(2, bobPost.comments.size());
+        assertEquals("Jeff", bobPost.comments.get(0).author);
+        
+        // Delete the post
+        bobPost.delete();
+        
+        // Check that all comments have been deleted
+        assertEquals(1, User.count());
+        assertEquals(0, Post.count());
+        assertEquals(0, Comment.count());
+    }
+    
+这次全绿了么？
+
+![new test](image/guide2-2.png)
+
+## 使用Fixtures来写更复杂的测试
+
+当你开始写更加复杂的测试，你通常需要一些测试数据。Fixtures允许你在一个[YAML](http://zh.wikipedia.org/zh-cn/YAML)文件中描述你的模型，并在测试开始前加载。
+
+编辑`/yabe/test/data.yml`并开始描述一个User：
+
+    User(bob):
+        email: bob@gmail.com
+        password: secret
+        fullname: Bob
+     
+    ...
+
+呃，因为`data.yml`有点大，你可以在[这里](http://www.playframework.com/documentation/1.2.7/files/data.yml)下载它。
+
+现在我们可以创建一个加载数据并对它运行一些断言的测试用例：
+
+    @Test
+    public void fullTest() {
+        Fixtures.loadModels("data.yml");
+     
+        // Count things
+        assertEquals(2, User.count());
+        assertEquals(3, Post.count());
+        assertEquals(3, Comment.count());
+     
+        // Try to connect as users
+        assertNotNull(User.connect("bob@gmail.com", "secret"));
+        assertNotNull(User.connect("jeff@gmail.com", "secret"));
+        assertNull(User.connect("jeff@gmail.com", "badpassword"));
+        assertNull(User.connect("tom@gmail.com", "secret"));
+     
+        // Find all of Bob's posts
+        List<Post> bobPosts = Post.find("author.email", "bob@gmail.com").fetch();
+        assertEquals(2, bobPosts.size());
+     
+        // Find all comments related to Bob's posts
+        List<Comment> bobComments = Comment.find("post.author.email", "bob@gmail.com").fetch();
+        assertEquals(3, bobComments.size());
+     
+        // Find the most recent post
+        Post frontPost = Post.find("order by postedAt desc").first();
+        assertNotNull(frontPost);
+        assertEquals("About the model layer", frontPost.title);
+     
+        // Check that this post has two comments
+        assertEquals(2, frontPost.comments.size());
+     
+        // Post a new comment
+        frontPost.addComment("Jim", "Hello guys");
+        assertEquals(3, frontPost.comments.size());
+        assertEquals(4, Comment.count());
+    }
+    
+你可以在[YAML manual page](http://www.playframework.com/documentation/1.2.7/yaml)中阅读更多关于Play和YAML的内容。
+
+## 保存你的成果
+
+现在我们已经完成了博客引擎的大部分模型层。既然已经创建并测试好了模型层，我们可以开始开发这个Web应用了。
+
+不过在继续前进之前，是时候用Bazaar保存你的成果。打开命令行，输入`bzr st`来看看在前一个提交之后做的修改：
+
+    $ bzr st
+    
+如你所见，一些新文件不在版本控制之中。`test-result`目录不需要加入到版本控制，所以就忽略它。
+
+    $ bzr ignore test-result
+    
+通过`bzr add`向版本控制加入其他文件。
+
+    $ bzr add
+    
+你现在可以提交你的改动了。
+
+    $ bzr commit -m "The model layer is ready"
+
