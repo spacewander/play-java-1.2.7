@@ -4,7 +4,7 @@
 
 # 生成验证码
 
-我们先从如何简单地利用Play来生成验证码。简单来说，我们需要增加一个action，不过让它返回的是一个二进制的对象而不是之前的HTML页面。
+如何利用Play框架来生成验证码？简单来说，我们需要增加一个action，不过让它返回的是一个二进制的对象而不是之前的HTML页面。
 
 因为Play是一个全栈式框架，我们试图在框架内部内置了Web应用通常所需的东西；其中就包括生成验证码。我们可以使用`play.libs.Images`来简单地生成验证码，然后通过HTTP响应返回它。
 
@@ -19,7 +19,7 @@
 
 > **请勿忘记**导入`play.lib.*`
 
-现在在/yabe/conf/routes添加新路由：
+现在向`/yabe/conf/routes`添加新路由：
 
     GET     /captcha                                Application.captcha
     
@@ -92,3 +92,45 @@
 ![comment form](image/guide5-2.png)
 
 ## 验证验证码
+
+现在来验证验证码吧。我们添加了`randomID`作为隐藏域对吧？那就在`postComment`里面把它提取出来，然后取出缓存中对应的编码，最后跟提交的输入进行比对。
+
+这一点都不难。让我们来修改`postComment`方法。
+
+    public static void postComment(
+            Long postId, 
+            @Required(message="Author is required") String author, 
+            @Required(message="A message is required") String content, 
+            @Required(message="Please type the code") String code, 
+            String randomID) 
+    {
+        Post post = Post.findById(postId);
+        validation.equals(
+            code, Cache.get(randomID)
+        ).message("Invalid code. Please type it again");
+        if(validation.hasErrors()) {
+            render("Application/show.html", post, randomID);
+        }
+        post.addComment(author, content);
+        flash.success("Thanks for posting %s", author);
+        Cache.delete(randomID);
+        show(postId);
+    }
+    
+因为现在有不同的错误信息，而我们只想显示第一条信息，所以修改`show.html`模板中显示错误的部分：
+
+    .. 
+    #{ifErrors}
+        <p class="error">
+            ${errors[0]}
+        </p>
+    #{/ifErrors}
+    …
+    
+> 对于一个更加复杂的表单，错误信息不应该这样管理，而应该集中到一个讯息文件中，并且每个错误都应该在对应的区域内显示。
+
+检查验证码功能是否完成了。
+
+![check captcha](image/guide5-3.png)
+
+耶！
