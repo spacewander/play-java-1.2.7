@@ -168,4 +168,128 @@
         cloud.toString()
     );
     
+## 向博客界面添加标签
 
+现在我们又多了一个浏览文章的方式了。为了保持高效，我们需要向初始数据集添加标签测试数据。
+
+修改`/yabe/conf/initial-data.yml`来添加一些标签数据。比如：
+
+    …
+    Tag(play):
+        name:           Play
+     
+    Tag(architecture):
+        name:           Architecture
+     
+    Tag(test):
+        name:           Test
+     
+    Tag(mvc):
+        name:           MVC
+    …
+
+然后添加它们到文章的声明中：
+
+    …
+    Post(jeffPost):
+        title:          The MVC application
+        postedAt:       2009-06-06
+        author:         jeff
+        tags:
+                        - play
+                        - architecture
+                        - mvc
+        content:        >
+                        A Play
+    …
+    
+> 在YAML文件的顶部添加`Tags`的定义，因为它们会被`Post`用到。
+
+你需要重启应用来加载新的初始数据。注意Play甚至会告诉你出现在YAML文件中的问题：
+
+![YAML ERROR](image/guide6-1.png)
+
+然后修改`#{display /}`标签，在全文模式下展示标签集合。修改`/yabe/app/views/tags/display.html`：
+
+    …
+    #{if _as != 'full'}
+        <span class="post-comments">
+            &nbsp;|&nbsp; ${_post.comments.size() ?: 'no'}
+            comment${_post.comments.size().pluralize()}
+            #{if _post.comments}
+                , latest by ${_post.comments[0].author}
+            #{/if}
+        </span>
+    #{/if}
+    #{elseif _post.tags}
+        <span class="post-tags">
+            - Tagged
+            #{list items:_post.tags, as:'tag'}
+                <a href="#">${tag}</a>${tag_isLast ? '' : ', '}
+            #{/list}
+        </span>
+    #{/elseif}
+    …
+    
+![post with tags](image/guide6-2.png)
+
+## 标签页面
+
+现在我们可以实现通过标签浏览文章了。在`#{display /}`标签，之前，我们留下一个空链接；现在终于可以用`listTagged` action补完它：
+
+    …
+    - Tagged
+    #{list items:_post.tags, as:'tag'}
+        <a href="@{Application.listTagged(tag.name)}">${tag}</a>${tag_isLast ? '' : ', '}
+    #{/list}
+    …
+
+在`Application`控制器创建action方法：
+
+    …
+    public static void listTagged(String tag) {
+        List<Post> posts = Post.findTaggedWith(tag);
+        render(tag, posts);
+    }
+    …
+    
+如常，我们创建一个特定的路由来保持URI语义化：
+
+    GET     /posts/{tag}                    Application.listTagged
+    
+我们遇到一个问题，因为这个路由跟之前的冲突了。这两个路由将匹配同一个URI：
+
+    GET     /posts/{id}                     Application.show
+    GET     /posts/{tag}                    Application.listTagged
+    
+不过，因为我们假设一个`id`是数值类型，而`tag`不是，我们可以简单粗暴地用正则表达式解决问题：
+
+    GET     /posts/{id}                     Application.show
+    GET     /posts/{tag}                    Application.listTagged
+    
+最后，我们需要创建`/yabe/app/views/Application/listTagged.html`模板，用于新的`listTagged` action：
+
+    #{extends 'main.html' /}
+    #{set title:'Posts tagged with ' + tag /}
+     
+    *{********* Title ********* }*
+     
+    #{if posts.size() > 1}
+       <h3>There are ${posts.size()} posts tagged '${tag}'</h3>
+    #{/if}
+    #{elseif posts}
+        <h3>There is 1 post tagged '${tag}'</h3>
+    #{/elseif}
+    #{else}
+        <h3>No post tagged '${tag}'</h3>
+    #{/else}
+     
+    *{********* Posts list *********}*
+     
+    <div class="older-posts">
+        #{list items:posts, as:'post'}
+            #{display post:post, as:'teaser' /}
+        #{/list}
+    </div>
+    
+![finish](image/guide6-3.png)
