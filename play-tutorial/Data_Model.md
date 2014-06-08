@@ -71,7 +71,7 @@
 
 > 当你在`test mode`中运行Play应用时，Play会自动切换到`test`框架ID并加载对应的`application.conf`。阅读[框架ID文档](http://www.playframework.com/documentation/1.2.7/ids)来了解更多。
 
-在浏览器打开http://localhost:9000/@tests页面来看看测试运行器。尝试选择所有的默认测试并运行；应该全部都会是绿色……但是默认的测试其实什么都没测:D
+在浏览器打开<http://localhost:9000/@tests>页面来看看测试运行器。尝试选择所有的默认测试并运行；应该全部都会是绿色……但是默认的测试其实什么都没测:D
 
 ![test runner](image/guide2-1.png)
 

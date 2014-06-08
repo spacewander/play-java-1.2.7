@@ -23,7 +23,7 @@
 
     GET     /captcha                                Application.captcha
     
-然后打开http://localhost:9000/captcha看看效果。
+然后打开<http://localhost:9000/captcha>看看效果。
 
 ![captcha](image/guide5-1.png)
 
