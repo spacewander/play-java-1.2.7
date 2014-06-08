@@ -9,7 +9,11 @@ import models.*;
 
 public class Application extends Controller {
 
-    public static void index() {
+    /**
+     * render the index page
+     */
+    public static void index() 
+    {
         render();
     }
 
