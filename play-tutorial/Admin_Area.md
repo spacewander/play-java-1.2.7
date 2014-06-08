@@ -147,7 +147,7 @@ CRUD模块是一个通用的应用，可以对模型类进行内省生成简单�
 
 然后检查结果：
 
-![post result](image/guide7-3)
+![post result](image/guide7-3.png)
 
 这里你会看到一个有趣的副作用：`@MaxSize`验证规则改变了Play显示Post表单的方式。现在它给内容域准备的是textarea。
 
@@ -194,4 +194,174 @@ CRUD模块是一个通用的应用，可以对模型类进行内省生成简单�
 		public Post post; 
 	…
 
+如你所见，表单标签有点奇怪。Play使用Java成员变量作为表单标签。要想自定义它，我们仅需在`/yabe/conf/messages`中提供一组标签名。
 
+> 事实上，你可以用一个单独的`messages`文件对应应用支持的每种语言。比如，你可以把中文信息放入`/yabe/conf/messages.zh`。你将会在最后一章读到如何进行本地化。
+
+添加这些标签到`messages`文件：
+
+    title=Title
+    content=Content
+    postedAt=Posted at
+    author=Author
+    post=Related post
+    tags=Tags set
+    name=Common name
+    email=Email
+    password=Password
+    fullname=Full name
+    isAdmin=User is admin
+    
+然后刷新表单，你将看到新的表单标签：
+
+![form label](image/guide7-4.png)
+
+## 自定义Comments列表
+
+你可以随心所欲地自定义CRUD模块。举个例子，你不大可能觉得评论列表长得符合你的期望。我们还需要添加更多列，特别是“相关文章”列来帮助我们过滤评论。
+
+事实上，由于你的应用才是老大，你可以覆盖掉CRUD模块提供的任意**action**和**模板**。举个例子，如果我们想自定义评论列表，我们仅需提供`/yabe/app/views/Comments/list.html`模板。
+
+在CRUD模块启动后，你就能使用更多的play命令。`crud:ov`命令帮助你覆盖掉任意模板。在命令行里。输入：
+
+    $ play crud:ov --template Comments/list
+    
+现在你有一个新的模板`/yabe/app/views/Comments/list.html`：
+
+    #{extends 'CRUD/layout.html' /}
+     
+    <div id="crudList" class="${type.name}">
+	
+	    <h2 id="crudListTitle">&{'crud.list.title', type.name}</h2>
+     
+	    <div id="crudListSearch">
+		    #{crud.search /}
+	    </div>
+     
+	    <div id="crudListTable">
+		    #{crud.table /}
+	    </div>
+     	
+	    <div id="crudListPagination">
+		    #{crud.pagination /}
+	    </div>
+	
+	    <p id="crudListAdd">
+		    <a href="@{blank()}">&{'crud.add', type.modelName}</a>
+	    </p>
+     
+    </div>
+    
+首先看看`&{'crud.list.title', type.name}`，这里输出了键名为`crud.list.title`的本地化信息，使用`type.name`作为信息参数。CRUD模块的`conf/messages`包括条目`crud.list.title=&{%s}`，其中的参数作为另一个参数查找时的键，比如这里的`&{'Comments'}`，因为`type`是一个`models.Comments`对应的`CRUD.ObjectType`。既然我们没有定义对应的信息文件条目，默认会输出信息键 - `Comments`。在本教程的最后一章，你会学到关于本地化信息的更多东西。
+
+`#{crud.table /}`是生成表格的标签。我们可以使用`fields`参数添加更多列。试一下这个：
+
+    #{crud.table fields:['content', 'post', 'author'] /}
+    
+现在我们有三列信息了：
+
+![columns](image/guide7-5.png)
+
+有个问题，`content`域可能容不下有些过长的评论。我们需要指定`#{crud.table /}`能够在需要的时候截短它。
+
+使用`#{crud.custom /}`标签，我们可以自定义每个域的展示方式：
+
+    #{crud.table fields:['content', 'post', 'author']}
+     #{crud.custom 'content'}
+      <a href="@{Comments.show(object.id)}">
+       ${object.content.length() > 50 ? object.content[0..50] + '…' : object.content}
+      </a>
+     #{/crud.custom}
+    #{/crud.table}
+    
+> 是的，这里撒了些Groovy的语法糖。
+
+## 自定义Posts表单
+
+我们也可以自定义生成的表单。举个例子，原本我们在Post表单中输入标签并不容易。我们需要改善体验。让我们来重载掉`Posts/show`模板：
+
+    $ play crud:ov --template Posts/show
+    
+现在你有了`/yabe/app/views/Posts/show.html`：
+
+    #{extends 'CRUD/layout.html' /}
+     
+    <div id="crudShow" class="${type.name}">
+	
+    <h2 id="crudShowTitle">&{'crud.show.title', type.modelName}</h2>
+     
+    <div class="objectForm">
+    #{form action:@save(object.id), enctype:'multipart/form-data'}
+        #{crud.form /}
+        <p class="crudButtons">
+            <input type="submit" name="_save" 
+                   value="&{'crud.save', type.modelName}" />
+            <input type="submit" name="_saveAndContinue" 
+                   value="&{'crud.saveAndContinue', type.modelName}" />
+        </p>
+    #{/form}
+    </div>
+     
+    #{form @delete(object.id)}
+        <p class="crudDelete">
+            <input type="submit" value="&{'crud.delete', type.modelName}" />
+        </p>
+    #{/form}
+     
+    </div>
+    
+你可以通过给`#{crud.form /}`标签添加一个`crud.custom`标签来自定义`tags`域：
+
+    #{crud.form}
+        #{crud.custom 'tags'}
+            <label for="tags">
+                &{'tags'}
+            </label>
+           	    <script type="text/javascript">
+	            var toggle = function(tagEl) {
+	                var input = document.getElementById('h'+tagEl.id);
+	                if(tagEl.className.indexOf('selected') > -1) {
+	                    tagEl.className = 'tag';
+	                    input.value = '';
+	                } else {
+	                    tagEl.className = 'tag selected';
+	                    input.value = tagEl.id;
+	                }
+	            }
+	        </script>
+	        <div class="tags-list">
+	            #{list items:models.Tag.findAll(), as:'tag'}
+	               <span id="${tag.id}" onclick="toggle(this)" 
+	                    class="tag ${object.tags.contains(tag) ? 'selected' : ''}">
+	                   ${tag}
+	               </span> 
+	               <input id="h${tag.id}" type="hidden" name="${fieldName}" 
+	                        value="${object.tags.contains(tag) ? tag.id : ''}" />
+	            #{/list}
+	        </div>
+        #{/crud.custom}
+    #{/crud.form}
+    
+通过使用Javascript，我们实现了一个简单的标签选择器：
+
+![tags selector](image/guide7-6.png)    
+
+要想自定义标签列表的外观，以下面的内容创建`public/stylesheets/tags.css`：
+
+    .tags-list .tag {
+         cursor: pointer;
+         padding: 1px 4px;
+    }
+    .crudField .tags-list .selected {
+         background: #222;
+         color: #fff;
+    }
+    
+然后，在`views/CRUD/layout.html`，改变`#{set 'moreStyles'}`块成这样：
+
+    #{set 'moreStyles'}
+        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/crud.css'}" />
+        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/tags.css'}" />
+    #{/set}
+    
+管理面板的工作暂告一段落。
