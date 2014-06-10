@@ -6,4 +6,6 @@
     * [设置验证码](Setting_up_a_captcha.md)
     * [对添加标签的支持](Add_tag_support.md)
     * [通过CRUD来实现一个基本的管理面板](Admin_Area.md)
+    * [添加验证](Adding_authentication.md)
+    * [自定义编辑区域](Creating_a_custom_editor_area.md)
     
