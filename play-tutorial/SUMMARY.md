@@ -8,4 +8,6 @@
     * [通过CRUD来实现一个基本的管理面板](Admin_Area.md)
     * [添加验证](Adding_authentication.md)
     * [自定义编辑区域](Creating_a_custom_editor_area.md)
-    
+    * [完成应用测试](App_test.md)
+    * [部署应用](Deployment.md)
+    * [国际化和本地化](i18n.md)

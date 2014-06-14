@@ -63,7 +63,7 @@
 
 要运行一个测试用例，你需要在'test'模式下运行应用。停止当前正在运行的应用，打开命令行并输入：
 
-~$ play test
+    ~$ play test
 
 ![test](image/guide2-0.png)
 
