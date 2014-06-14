@@ -142,7 +142,7 @@
 
 Ok，现在刷新博客的首页。
 
-![shabby hpme page](image/guide3-0.png)
+![shabby home page](image/guide3-0.png)
 
 不是很美观，但是至少有内容了！
 
@@ -314,6 +314,8 @@ Ok，现在刷新博客的首页。
 从[这里](http://www.playframework.com/documentation/1.2.7/files/main.css)下载一份样式表，然后复制到`/public/stylesheets/main.css`。（译者注：最困难的部分就这样一笔带过了，这让我想到了[如何画一匹马](http://tieba.baidu.com/p/1391621903)）
 
 刷新页面，你应该看到最终的完成稿了。
+
+![result](image/guide3-2.png)
 
 ## 提交你的成果
 
