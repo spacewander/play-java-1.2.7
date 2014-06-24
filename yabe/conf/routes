@@ -3,10 +3,22 @@
 # ~~~~
 
 # Home page
-GET     /                                       Application.index
+GET	/                                      Application.index
+GET     /posts/{<[0-9]+>id}                     Application.show
+GET     /posts/{tag}                            Application.listTagged
+POST    /posts/{<[0-9]+>postId}/comments        Application.postComment
+GET     /captcha                                Application.captcha
 
-# Ignore favicon requests
-GET     /favicon.ico                            404
+# Adminstration
+GET     /admin/?                                Admin.index
+GET     /admin/myPosts/{id}                     Admin.form
+POST    /admin/myPosts/{id}                     Admin.save
+GET     /admin/new                              Admin.form
+POST    /admin/new                              Admin.save
+*       /admin                                  module:crud
+
+# Import Secure routes
+*       /                                       module:secure
 
 # Map static resources from the /app/public folder to the /public path
 GET     /public/                                staticDir:public

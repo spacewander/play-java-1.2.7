@@ -17,3 +17,5 @@ isAdmin=User is admin
 secure.username=Your email:
 secure.password=Your password:
 secure.signin=Log in now
+
+views.main.tools.login = Log in to write something

@@ -1,0 +1,79 @@
+# You can specialize this file for each language.
+# For exemple, for french create a messages.fr file
+#
+
+title=标题
+content=正文
+postedAt=发布于
+author=作者
+post=文章
+tags=标签
+name=名字
+email=邮件
+password=密码
+fullname=全名
+isAdmin=是否是管理员
+
+views.main.tools.login = 写点什么
+
+post = 文章 
+Post = 文章
+posts = 文章列表
+Posts = 文章列表 
+comment = 评论
+Comment = 评论
+comments = 评论列表
+Comments = 评论列表
+user = 用户
+User = 用户
+users = 用户列表
+Users = 用户列表
+
+# play/modules/crud (administration) 
+crud.title = 管理面板
+crud.home = 主页
+crud.blank = 新增功能 
+crud.index.title = 选择编辑对象
+crud.index.objectType = 输入对象
+crud.index.action = 
+crud.index.add = 添加
+crud.add = &{%s} 添加 
+crud.list.title = &{%s} 
+crud.list.size = %d &{%s} 
+crud.list.totalSize = %d 总计 
+crud.pagination.previous = « 上一页 
+crud.pagination.next = 下一页 » 
+crud.pagination.last = 末页 »» 
+crud.pagination.first = «« 首页 
+crud.show.title = &{%s} 编辑 
+crud.save = 保存 
+crud.saveAndContinue = 保存并继续编辑
+crud.cancel = 取消 
+crud.hasErrors = 请更正错误 
+crud.blank.title = &{%s} 添加
+crud.saveAndAddAnother = 保存并新增
+crud.delete = &{%s} 删除 
+crud.created = &{%s} 已创建
+crud.saved = &{%s} 已保存
+crud.deleted = &{%s} 已删除 
+crud.delete.error = 此对象无法删除 
+crud.search = 搜索 
+crud.none = (无) 
+crud.help.required = 必填
+crud.help.minlength = 至少要有 %d. 
+crud.help.maxlength = 最多只能是 %d. 
+crud.help.email = 需要有效邮箱
+crud.help.dateformat =  时间格式 YYYY-MM-DD
+crud.help.numeric = 需要数值类型 
+crud.help.min =  至少需要 %d 
+crud.help.future = 在将来 
+crud.help.past = 在之前 
+crud.help.after = 之上 %s. 
+crud.help.before = 之下 %s. 
+crud.help.range = 从 %d 到 %d 
+    
+# play/modules/secure 
+secure.username = 您的邮箱: 
+secure.password = 您的密码: 
+secure.signin =  马上登录
+
