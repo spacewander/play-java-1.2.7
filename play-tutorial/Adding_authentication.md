@@ -37,7 +37,7 @@
 
 ![login](image/guide8-1.png)
 
-不过，现在无论你往用户/密码框填什么，填都会让你通过。
+不过，现在无论你往用户/密码框填什么，都会让你通过。
 
 ## 自定义验证过程
 
@@ -236,7 +236,7 @@ secure模块没有提供`authentication`，当然也没提供`authentization`。
     
 注意我们用`#{secure.check /}`标签，只给`admin`用户展示菜单。
 
-![menu](image/guide8-3.png)
+![menu](image/guide8-5.png)
 
 但是我们的CRUD部分依然处于危险之中！如果用户知道URL，他/她还是可以访问它。我们必须保护这些控制器。使用`@Check`注解是最简单的方法。举个例子，对于`Posts`控制器：
 
@@ -251,8 +251,6 @@ secure模块没有提供`authentication`，当然也没提供`authentization`。
     }
     
 同样处理`Tags`，`Comments`和`Users`控制器。现在作为普通用户（比如``）登录。你应该看不到CRUD管理员链接。如果试图访问<http://localhost:9000/admin/users>，你会得到一个**403 Forbidden**响应。
-
-![Forbidden]()
 
 ## 自定义CRUD布局
 
@@ -311,3 +309,5 @@ secure模块没有提供`authentication`，当然也没提供`authentization`。
     secure.signin=Log in now
     
 ![login page](image/guide8-8.png)
+
+第八篇 - 完
