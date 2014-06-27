@@ -235,11 +235,11 @@
 
 ## 标签页面
 
-现在我们可以实现通过标签浏览文章了。在`#{display /}`标签，之前，我们留下一个空链接；现在终于可以用`listTagged` action补完它：
+现在我们可以实现通过标签浏览文章了。在`#{display /}`标签，之前，我们留下一个空链接；现在终于可以用`listTagged` action补完它(修改`yabe/app/views/tags/display.html`)：
 
     …
     - Tagged
-    #{list items:_post.tags, as:'tag'}
+    #{list items:post.tags, as:'tag'}
         <a href="@{Application.listTagged(tag.name)}">${tag}</a>${tag_isLast ? '' : ', '}
     #{/list}
     …
@@ -264,7 +264,7 @@
     
 不过，因为我们假设一个`id`是数值类型，而`tag`不是，我们可以简单粗暴地用正则表达式解决问题：
 
-    GET     /posts/{id}                     Application.show
+    GET     /posts/{<[0-9]+>id}             Application.show
     GET     /posts/{tag}                    Application.listTagged
     
 最后，我们需要创建`/yabe/app/views/Application/listTagged.html`模板，用于新的`listTagged` action：

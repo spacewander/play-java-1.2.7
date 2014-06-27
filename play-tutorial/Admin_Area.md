@@ -8,12 +8,13 @@
 
 CRUD模块是一个通用的应用，可以对模型类进行内省生成简单的列表和表单。
 
-要启动CRUD模块，在`/conf/dependencies.yml`的`require`后面添加一行：
+要启动CRUD模块，在`/conf/dependencies.yml`的`require`后面添加一行：（注意play后面的箭头两边需要留空格！）
 
 	require:
+	    - play
 		- play -> crud
 		
-现在运行`play dependencies`命令，来解决新的模块依赖关系。如果正用着IDE，你应该更新项目配置，来包括新的模块依赖：比如，运行`play eclipsify`，然后在Eclipse里刷新项目。
+现在运行`play dependencies`命令，来解决新的模块依赖关系。如果正用着IDE，你应该更新项目配置，来包括新的模块依赖：比如，运行`play eclipsify`，在Eclipse里重新导入项目，然后按F5刷新项目。
 
 然后这个模块提供一系列现在就能用上的**路由**。要导入这些路由，在`/yabe/conf/routes`加入：
 
